@@ -13,7 +13,7 @@ class MessagesHeader extends Component {
 					style={{ marginBottom: 0 }}>
 					<span>
 						Channel
-						<Icon name={"start outline"} color="black" />
+						<Icon name={"star outline"} color="black" />
 					</span>
 					<Header.Subheader>2 Users</Header.Subheader>
 				</Header>
