@@ -1,25 +1,33 @@
 import React, { Component } from 'react';
+import uuidv4 from 'uuid/v4';
 import firebase from '../../firebase';
 import { Segment, Button, Input } from 'semantic-ui-react';
 
+import FileModal from './FileModal';
+import { initializeApp } from 'firebase';
+
 class MessageForm extends Component {
 	state = {
+		storageRef: firebase.storage().ref(),
+		uploadTask: null,
+		uploadState: '',
+		percentUploaded: 0,
 		message: '',
 		channel: this.props.currentChannel,
 		user: this.props.currentUser,
 		loading: false,
-		errors: []
-	}
+		errors: [],
+		modal: false
+	};
+
+	openModal = _ => this.setState({ modal: true })
+	closeModal = _ => this.setState({ modal: false })
 
 	handleChange = event => {
 		this.setState({ [event.target.name]: event.target.value })
 	}
 
-	messagesRef = event => {
-		this.setState({ [event.target.name]: event.target.value })
-	}
-
-	createMessage = _ => {
+	createMessage = (fileUrl = null) => {
 		const message = {
 			timestamp: firebase.database.ServerValue.TIMESTAMP,
 			user: {
@@ -27,7 +35,12 @@ class MessageForm extends Component {
 				name: this.state.user.displayName,
 				avatar: this.state.user.photoURL
 			},
-			content: this.state.message
+			// content: this.state.message
+		}
+		if (fileUrl !== null) {
+			message['image'] = fileUrl;
+		} else {
+			message['content'] = this.state.message;
 		}
 
 		return message;
@@ -38,35 +51,88 @@ class MessageForm extends Component {
 		const { message, channel } = this.state;
 
 		if (message) {
-			console.log('if 1')
 			this.setState({ loading: true });
-			console.log('on arrive ici 0')
 			messagesRef
 				.child(channel.id)
 				.push()
 				.set(this.createMessage())
 				.then(() => {
-					console.log('on arrive ici 1')
 					this.setState({ loading: false, message: '', errors: [] })
 				})
 				.catch(err => {
-					console.log('on arrive ici 2')
-					console.log(err);
+					console.error(err);
 					this.setState({
 						loading: false,
 						errors: this.state.errors.concat(err)
 					})
 				})
 		} else {
-			console.log('if 2')
 			this.setState({
 				errors: this.state.errors.concat({ message: 'Add a message' })
 			})
 		}
 	}
 
+	uploadFile = (file, metadata) => {
+		const pathToUpload = this.state.channel.id;
+		const ref = this.props.messagesRef;
+		const filePath = `chat/public/${uuidv4()}.jpg`;
+
+		this.setState({
+			uploadState: 'uploading',
+			uploadTask: this.state.storageRef.child(filePath).put(file, metadata)
+		},
+			_ => {
+				this.state.uploadTask.on(
+					'state_changed',
+					snap => {
+						const percentUploaded = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+						this.setState({ percentUploaded });
+					},
+					err => {
+						console.error(err)
+						this.setState({
+							errors: this.state.errors.concat(err),
+							uploadState: 'error',
+							uploadTask: null
+						})
+					},
+					_ => {
+						this.state.uploadTask.snapshot.ref
+							.getDownloadURL()
+							.then(downloadUrl => {
+								this.sendFileMessage(downloadUrl, ref, pathToUpload);
+							})
+							.catch(err => {
+								console.error(err)
+								this.setState({
+									errors: this.state.errors.concat(err),
+									uploadState: 'error',
+									uploadTask: null
+								})
+							})
+					})
+			})
+	}
+
+	sendFileMessage = (fileUrl, ref, pathToUpload) => {
+		ref
+			.child(pathToUpload)
+			.push()
+			.set(this.createMessage(fileUrl))
+			.then(_ => {
+				this.setState({ uploadState: 'done' })
+			})
+			.catch(err => {
+				console.error(err);
+				this.setState({
+					errors: this.state.errors.concat(err)
+				})
+			})
+	}
+
 	render() {
-		const { errors, message, loading } = this.state
+		const { errors, message, loading, modal } = this.state
 		return (
 			<Segment className="message__form">
 				<Input
@@ -92,9 +158,15 @@ class MessageForm extends Component {
 						icon="edit" />
 					<Button
 						color="teal"
+						onClick={this.openModal}
 						content="Upload Media"
 						labelPosition="right"
 						icon="cloud upload" />
+					<FileModal
+						modal={modal}
+						closeModal={this.closeModal}
+						uploadFile={this.uploadFile}
+					/>
 				</Button.Group>
 			</Segment>
 		)
