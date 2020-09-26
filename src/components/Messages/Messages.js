@@ -14,7 +14,9 @@ class Messages extends Component {
 		messagesRef: firebase.database().ref('messages'),
 		messagesLoading: true,
 		channel: this.props.currentChannel,
+		isChannelStarred: false,
 		user: this.props.currentUser,
+		userRef: firebase.database().ref('users'),
 		progressBar: false,
 		numUniqueUsers: '',
 		searchLoading: false,
@@ -26,6 +28,7 @@ class Messages extends Component {
 
 		if (channel && user) {
 			this.addListeners(channel.id);
+			this.addUserStarListener(channel.id, user.uid)
 		}
 	}
 
@@ -47,6 +50,20 @@ class Messages extends Component {
 		});
 	};
 
+	addUserStarListener = (channelId, userId) => {
+		this.state.userRef
+			.child(userId)
+			.child('starred')
+			.once('value')
+			.then(data => {
+				if (data.val !== null) {
+					const channelIds = Object.keys(data.val());
+					const prevStarred = channelIds.includes(channelId);
+					this.setState({ isChannelStarred: prevStarred });
+				}
+			})
+	}
+
 	getMessagesRef = _ => {
 		const { messagesRef, privateMessagesRef, privateChannel } = this.state;
 
@@ -59,6 +76,39 @@ class Messages extends Component {
 			searchLoading: true
 		}, _ => this.handleSearchMessages());
 	};
+
+	handleStar = _ => {
+		this.setState(prevState => ({
+			isChannelStarred: !prevState.isChannelStarred
+		}), _ => this.starChannel());
+	}
+
+	starChannel = _ => {
+		if (this.state.isChannelStarred) {
+			this.state.userRef
+				.child(`${this.state.user.uid}/starred`)
+				.update({
+					[this.state.channel.id]: {
+						name: this.state.channel.name,
+						details: this.state.channel.details,
+						createdBy: {
+							name: this.state.channel.createdBy.name,
+							avatar: this.state.channel.createdBy.avatar
+						}
+					}
+				})
+		} else {
+			this.state.userRef
+				.child(`${this.state.user.uid}/starred`)
+				.child(this.state.channel.id)
+				.remove(err => {
+					if (err !== null) {
+						console.error(err);
+					}
+				});
+
+		}
+	}
 
 	handleSearchMessages = _ => {
 		const channelMessages = [...this.state.messages];
@@ -110,7 +160,7 @@ class Messages extends Component {
 
 	render() {
 		// prettier-ignore 
-		const { messagesRef, messages, channel, user, progressBar, numUniqueUsers, searchTerm, searchResults, searchLoading, privateChannel } = this.state
+		const { messagesRef, messages, channel, user, progressBar, numUniqueUsers, searchTerm, searchResults, searchLoading, privateChannel, isChannelStarred } = this.state
 		return (
 			<Fragment>
 				<MessageHeader
@@ -119,6 +169,8 @@ class Messages extends Component {
 					handleSearchChange={this.handleSearchChange}
 					searchLoading={searchLoading}
 					privateChannel={privateChannel}
+					handleStar={this.handleStar}
+					isChannelStarred={isChannelStarred}
 				/>
 				<Segment>
 					<Comment.Group className={progressBar ? 'messages__progress' : 'messages'}>
