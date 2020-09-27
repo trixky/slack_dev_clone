@@ -38,6 +38,16 @@ class Messages extends Component {
 		}
 	}
 
+	componentDidUpdate(prevProps, prevState) {
+		if (this.messagesEnd) {
+			this.scrollToBottom();
+		}
+	}
+
+	scrollToBottom = _ => {
+		this.messagesEnd.scrollIntoView({ behavior: 'smooth' });
+	}
+
 	addListeners = channelId => {
 		this.addMessageListener(channelId);
 		this.addTypingListeners(channelId);
@@ -243,10 +253,8 @@ class Messages extends Component {
 				<Segment>
 					<Comment.Group className={progressBar ? 'messages__progress' : 'messages'}>
 						{searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
-						{/* <div style={{ display: 'flex', alignItems: 'center' }}>
-							<span className="user__typing">douglas is typing</span> <Typing />
-						</div> */}
 						{this.displayTypingUsers(typingUsers)}
+						<div ref={node => (this.messagesEnd = node)}></div>
 					</Comment.Group>
 				</Segment>
 				<MessageForm
