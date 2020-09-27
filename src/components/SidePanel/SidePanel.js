@@ -10,7 +10,6 @@ class SidePanel extends Component {
 	render() {
 		const { currentUser, primaryColor } = this.props;
 
-		console.log(primaryColor)
 		return (
 			<Menu
 				size="large"

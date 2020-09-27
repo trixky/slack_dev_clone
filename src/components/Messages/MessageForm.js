@@ -135,7 +135,7 @@ class MessageForm extends Component {
 
 	getPath = _ => {
 		if (this.props.isPrivateChannel) {
-			return `chat/private-${this.state.channel.id}`;
+			return `chat/private/${this.state.channel.id}`;
 		} else {
 			return `chat/public`;
 		}
