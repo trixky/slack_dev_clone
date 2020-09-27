@@ -8,6 +8,7 @@ import MessageHeader from './MessagesHeader';
 import MessageForm from './MessageForm';
 import Message from './Message';
 import Typing from './Typing';
+import Skeleton from './Skeleton';
 
 class Messages extends Component {
 	state = {
@@ -236,9 +237,19 @@ class Messages extends Component {
 		))
 	)
 
+	displayMessagesSkeleton = messagesLoading => (
+		messagesLoading ? (
+			<React.Fragment>
+				{[...Array(10)].map((_, index) => (
+					<Skeleton key={index} />
+				))}
+			</React.Fragment>
+		) : null
+	)
+
 	render() {
 		// prettier-ignore 
-		const { messagesRef, messages, channel, user, progressBar, numUniqueUsers, searchTerm, searchResults, searchLoading, privateChannel, isChannelStarred, typingUsers } = this.state
+		const { messagesRef, messages, channel, user, progressBar, numUniqueUsers, searchTerm, searchResults, searchLoading, privateChannel, isChannelStarred, typingUsers, messagesLoading } = this.state
 		return (
 			<Fragment>
 				<MessageHeader
@@ -252,6 +263,7 @@ class Messages extends Component {
 				/>
 				<Segment>
 					<Comment.Group className={progressBar ? 'messages__progress' : 'messages'}>
+						{this.displayMessagesSkeleton(messagesLoading)}
 						{searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
 						{this.displayTypingUsers(typingUsers)}
 						<div ref={node => (this.messagesEnd = node)}></div>
