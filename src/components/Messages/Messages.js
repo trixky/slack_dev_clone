@@ -288,7 +288,7 @@ class Messages extends Component {
 					handleStar={this.handleStar}
 					isChannelStarred={isChannelStarred}
 				/>
-				<Segment>
+				<Segment className="messages_container">
 					<Comment.Group className={progressBar ? 'messages__progress' : 'messages'}>
 						{this.displayMessagesSkeleton(messagesLoading)}
 						{searchTerm ? this.displayMessages(searchResults) : this.displayMessages(messages)}
