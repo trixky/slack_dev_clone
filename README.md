@@ -12,6 +12,7 @@ An exercise in reproducing the slack platform with some interesting features wit
 
 ### Features
 
+- register / login
 - public chatroom
 - direct chat
 - show connected people
