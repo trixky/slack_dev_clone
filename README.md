@@ -8,7 +8,7 @@
 
 An exercise in reproducing the slack platform with some interesting features with [react.js](https://fr.reactjs.org/), [redux](https://redux.js.org/) and [firebase](https://firebase.google.com/). __(Firebase)__
 
-![Image description](https://i.ibb.co/k64GxHz/Capture-d-cran-32.png)
+![Image description](https://github.com/trixky/slack_dev_clone/blob/master/.demo/demo.png?raw=true)
 
 ### Features
 
